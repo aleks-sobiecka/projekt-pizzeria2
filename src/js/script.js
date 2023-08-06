@@ -67,7 +67,7 @@ const select = {
       thisProduct.processOrder();
 
       console.log('new Product:', thisProduct);
-    };
+    }
 
     //wygenerowanie produktów (wszytskich instanci klasy) na stronie w odpowiednim miejscu
     renderInMenu(){
@@ -86,7 +86,7 @@ const select = {
       /* add element to menu */
       menuContainer.appendChild(thisProduct.element);
 
-    };
+    }
 
     //wyszukuje elementu DOM i zapisuje je we właściwości this
     getElements(){
@@ -97,8 +97,9 @@ const select = {
       thisProduct.formInputs = thisProduct.form.querySelectorAll(select.all.formInputs);
       thisProduct.cartButton = thisProduct.element.querySelector(select.menuProduct.cartButton);
       thisProduct.priceElem = thisProduct.element.querySelector(select.menuProduct.priceElem);
+      thisProduct.imageWrapper = thisProduct.element.querySelector(select.menuProduct.imageWrapper);
 
-    };
+    }
 
     //funkcja pokazywania i chowania szczegółów produktów
     initAccordion(){
@@ -126,7 +127,7 @@ const select = {
         /* toggle active class on thisProduct.element */
         thisProduct.element.classList.toggle(classNames.menuProduct.wrapperActive);
       });
-    };
+    }
 
     //funkcja dodaje listenery eventów do formularza, kontrolek formularza i guzika dodania do koszyka
     //tak aby za każdym razem przeliczać cenę
@@ -150,7 +151,7 @@ const select = {
       });
       
 
-    };
+    }
 
     //przelicza cenę produktu z wybranymi opcjami
     processOrder(){
@@ -158,7 +159,6 @@ const select = {
 
       // covert form to object structure e.g. { sauce: ['tomato'], toppings: ['olives', 'redPeppers']}
       const formData = utils.serializeFormToObject(thisProduct.form);
-      console.log('formData', formData);
 
       // set price to default price
       let price = thisProduct.data.price;
@@ -175,8 +175,31 @@ const select = {
           const option = param.options[optionId];
           console.log(optionId, option);
 
+          //create constant for param with a name of paramId in formData that includes optionId
+          const optionSelected = formData[paramId] && formData[paramId].includes(optionId);
+
+          //find option Image
+          const optionImage = thisProduct.imageWrapper.querySelector("."+paramId+"-"+optionId);
+
+          //check if the Image was found
+          if(optionImage) {
+            //check if there is param with a name of paramId in formData and if it includes optionId
+            if(optionSelected){
+
+              //--> it's included
+              // add class active to the image
+              optionImage.classList.add(classNames.menuProduct.imageVisible);
+            }
+
+            //--> it's not included
+            else {
+              // remove class active from image
+            optionImage.classList.remove(classNames.menuProduct.imageVisible);
+            }
+          }
+
           // check if there is param with a name of paramId in formData and if it includes optionId
-          if(formData[paramId] && formData[paramId].includes(optionId)) {
+          if(optionSelected){
           
             //--> it's included
             // check if the option is not default
@@ -196,12 +219,12 @@ const select = {
             }
           }
         }
-      };
+      }
       
       // update calculated price in the HTML
       thisProduct.priceElem.innerHTML = price;
-    };
-  };
+    }
+  }
   
   const app = {
     //tworzy (obiekt)instancje dla każdego produktu według szablonu z klasy Product
