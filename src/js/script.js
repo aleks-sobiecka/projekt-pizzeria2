@@ -71,6 +71,11 @@ const select = {
     cart: {
       defaultDeliveryFee: 20,
     },
+    db: {
+      url: '//localhost:3131',
+      products: 'products',
+      orders: 'orders',
+    },    
   };
 
   const templates = {
@@ -413,7 +418,11 @@ const select = {
     announce(){
       const thisWidget = this;
 
-      const event = new Event('updated');
+      //Dzięki bubbles customowy event bąbelkuje i jest przekazywany od klikniętego elementu do rodzica.
+      //a np, event 'click' bąbelkuje domyślnie
+      const event = new CustomEvent('updated', {
+        bubbles: true
+      });
       thisWidget.element.dispatchEvent(event);
 
       //thisProduct.dom.amountWidgetElem = thisWidget.element
@@ -432,7 +441,7 @@ const select = {
       thisCart.getElements(element);
       thisCart.initActions(element);
 
-      console.log('new Cart:', thisCart);
+      //console.log('new Cart:', thisCart);
     }
 
     getElements(element){
@@ -444,17 +453,41 @@ const select = {
       thisCart.dom.wrapper = element;
       thisCart.dom.toggleTrigger = thisCart.dom.wrapper.querySelector(select.cart.toggleTrigger);
       thisCart.dom.productList = thisCart.dom.wrapper.querySelector(select.cart.productList);
+      thisCart.dom.deliveryFee = element.querySelector(select.cart.deliveryFee);
+      thisCart.dom.subtotalPrice = element.querySelector(select.cart.subtotalPrice);
+      thisCart.dom.totalPrice = element.querySelectorAll(select.cart.totalPrice);
+      thisCart.dom.totalNumber = element.querySelector(select.cart.totalNumber);
+      thisCart.dom.form = element.querySelector(select.cart.form);
+      thisCart.dom.address = element.querySelector(select.cart.address);
+      thisCart.dom.phone = element.querySelector(select.cart.phone);
     }
 
     //metoda która pozwala na rozwijanie i zwijanie koszyka
+    //przliczanie cen i ilości w koszyku
     initActions(){
       const thisCart = this;
 
       thisCart.dom.toggleTrigger.addEventListener('click', function(){
         thisCart.dom.wrapper.classList.toggle(classNames.cart.wrapperActive);
-      })
+      });
+
+      thisCart.dom.productList.addEventListener('updated', function(){
+        thisCart.update();
+      });
+
+      //wywołując event, zawarliśmy w nim odwołanie do instancji thisCartProduct
+      //Właśnie w ten sposób (event.detail.cartProduct) teraz ją odbiera i przekazuje do metody thisCart.remove
+      thisCart.dom.productList.addEventListener('remove', function(event){
+        thisCart.remove(event.detail.cartProduct);
+      });
+
+      thisCart.dom.form.addEventListener('submit', function(event){
+        event.preventDefault();
+        thisCart.sendOrder();
+      });
     }
 
+    //dodanie wypranego produktu do koszyka
     add(menuProduct){
       const thisCart = this;
 
@@ -467,6 +500,192 @@ const select = {
       /* add element to menu */
       thisCart.dom.productList.appendChild(generatedDOM);
 
+      //tworzenie nowej instancji klasy CartProduct i zapisanie jej w tablicy thisCart.products
+      thisCart.products.push(new CartProduct(menuProduct, generatedDOM));
+      
+      //wywołanie przeliczenia wszytskich kwot sum i ilości produktów w koszyku
+      thisCart.update();
+    }
+
+    //przelicza ceny w koszyku
+    update(){
+      const thisCart = this;
+
+      thisCart.deliveryFee = settings.cart.defaultDeliveryFee;
+      thisCart.totalNumber = 0;
+      thisCart.subtotalPrice = 0;
+
+      //sprawdzamy wszytskie produkty w koszyku aby wyliczyć ilość i cenę za nie
+      for(let product of thisCart.products){
+        thisCart.totalNumber += product.amount;
+        thisCart.subtotalPrice += product.price;
+      }
+
+      //liczymy totalPrice czyli sumę ceny zamówienia i dostawy
+      if (thisCart.totalNumber != 0){
+        thisCart.totalPrice = thisCart.deliveryFee + thisCart.subtotalPrice;
+        thisCart.dom.deliveryFee.innerHTML = thisCart.deliveryFee;
+        } else {
+          thisCart.totalPrice = 0;
+          thisCart.dom.deliveryFee.innerHTML = 0;
+        }
+
+      //pokazanie tych sum na stronie w koszyku
+      thisCart.dom.totalNumber.innerHTML = thisCart.totalNumber;
+      thisCart.dom.subtotalPrice.innerHTML = thisCart.subtotalPrice;
+
+      for (let price of thisCart.dom.totalPrice){
+        price.innerHTML = thisCart.totalPrice;
+      }
+    }
+
+    //usuwanie pozycji z koszyka
+    remove(event){
+      const thisCart = this;
+
+      //Usunięcie reprezentacji produktu z HTML-a,
+      event.dom.wrapper.remove();
+
+      //Usunięcie informacji o danym produkcie z tablicy thisCart.products
+      const productsRemove = thisCart.products.indexOf(event);
+      thisCart.products.splice(productsRemove, 1);
+
+      //Wywołanie metody update w celu przeliczenia sum po usunięciu produktu
+      thisCart.update();
+
+    }
+
+    sendOrder(){
+      const thisCart = this;
+
+      //przygotowanie adresu endpointu, z którym chcemy się połączyć (order)
+      const url = settings.db.url + '/' + settings.db.orders;
+
+      //przygotowanie (deklarowanie) danych (ładunku), które chcemy wysłać do serwera
+      const payload = {};
+      payload.address = thisCart.dom.address.value;
+      payload.phone = thisCart.dom.phone.value;
+      payload.totalPrice = thisCart.totalPrice;
+      payload.subtotalPrice = thisCart.subtotalPrice;
+      payload.totalNumber = thisCart.totalNumber;
+      payload.deliveryFee = thisCart.deliveryFee;
+      payload.products = [];
+
+      //Nie dodajemy do payload.products całych instancji. Dodajemy tylko obiekty podsumowania.
+      for(let prod of thisCart.products) {
+        payload.products.push(prod.getData());
+      }
+      
+      //stała która zawiera opcje, któe skonfigurujązapytanie
+      const options = {
+        //zmiana metody z domyślnej GET na POST
+        method: 'POST',
+        //ustawienie nagłówka aby serwer wiedział że wysyłamy dane w postaci JSON
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        //treść, którą wysyłamy
+        //Używamy tutaj metody JSON.stringify, aby przekonwertować obiekt payload na ciąg znaków w formacie JSON.
+        body: JSON.stringify(payload),
+      };
+      
+      //wywołanie fetch z ustawionymi opcjami
+      fetch(url, options)
+        .then(function(response){
+          return response.json();
+        }).then(function(parsedResponse){
+          console.log('parsedResponse', parsedResponse);
+        });
+    }
+  }
+
+  //odpowiada na funkcjonowanie pojedyńczej pozycji w koszyku
+  class CartProduct {
+    //menuProduct- referencja do obiektu podsumowania (jeden produkt w koszyku)
+    //element- referencja do utworzonego dla tego produktu elementu HTML-u (generatedDOM)
+    constructor(menuProduct, element){
+      const thisCartProduct = this;
+
+      thisCartProduct.id = menuProduct.id;
+      thisCartProduct.amount = menuProduct.amount;
+      thisCartProduct.name = menuProduct.name;
+      thisCartProduct.price = menuProduct.price;
+      thisCartProduct.priceSingle = menuProduct.priceSingle;
+      thisCartProduct.params = menuProduct.params;
+
+      thisCartProduct.getElements(element);
+      thisCartProduct.initAmountWidget();
+      thisCartProduct.initActions();
+    }
+
+    //wyszukuje elementu DOM i zapisuje je we właściwości this
+    getElements(element){
+      const thisCartProduct = this;
+
+      thisCartProduct.dom = {};
+
+      thisCartProduct.dom.wrapper = element;
+      thisCartProduct.dom.amountWidgetElem = element.querySelector(select.cartProduct.amountWidget);
+      thisCartProduct.dom.price = element.querySelector(select.cartProduct.price);
+      thisCartProduct.dom.edit = element.querySelector(select.cartProduct.edit);
+      thisCartProduct.dom.remove = element.querySelector(select.cartProduct.remove);
+    }
+
+    //tworzy nową instancje klasy AmountWidget i zapisuje ją we właściwości produktu dodanego do koszyka
+    initAmountWidget(){
+      const thisCartProduct = this;
+
+      thisCartProduct.amountWidget = new AmountWidget(thisCartProduct.dom.amountWidgetElem);
+    
+      thisCartProduct.dom.amountWidgetElem.addEventListener('updated', function(){
+        thisCartProduct.amount = thisCartProduct.amountWidget.value;
+        thisCartProduct.price = thisCartProduct.amount * thisCartProduct.priceSingle;
+        thisCartProduct.dom.price.innerHTML = thisCartProduct.price;
+      })
+    }
+
+    //detail to "szczegóły"(to który produkt ma być usunięty), które mają być przekazywane wraz z eventem
+    remove(){
+      const thisCartProduct = this;
+
+      const event = new CustomEvent('remove', {
+        bubbles: true,
+        detail: {
+          cartProduct: thisCartProduct,
+        },
+      });
+
+      thisCartProduct.dom.wrapper.dispatchEvent(event);
+      console.log('removed');
+    }
+
+    initActions(){
+      const thisCartProduct = this;
+
+      thisCartProduct.dom.edit.addEventListener('click',function(event){
+        event.preventDefault();
+      });
+      thisCartProduct.dom.remove.addEventListener('click',function(event){
+        event.preventDefault();
+        thisCartProduct.remove();
+      });
+
+    }
+
+    //przygotowanie obiektu z całej instancji który posiada potrzebne właściwości do wysłania do serwera
+    getData(){
+      const thisCartProduct = this;
+
+      const cartSummary ={
+        id: thisCartProduct.id,
+        amount: thisCartProduct.amount,
+        price: thisCartProduct.price,
+        priceSingle: thisCartProduct.priceSingle,
+        name: thisCartProduct.name,
+        params: thisCartProduct.params,
+      };
+
+      return cartSummary;
     }
   }
 
@@ -477,7 +696,8 @@ const select = {
       //console.log('thisApp.data:', thisApp.data);
 
       for(let productData in thisApp.data.products){
-        new Product(productData, thisApp.data.products[productData]);
+        //new Product(productData, thisApp.data.products[productData]);
+        new Product(thisApp.data.products[productData].id, thisApp.data.products[productData]);
       }
     },
 
@@ -485,7 +705,32 @@ const select = {
     initData: function(){
       const thisApp = this;
 
-      thisApp.data = dataSource;
+      thisApp.data = {};
+      const url = settings.db.url + '/' + settings.db.products;
+    
+      //Najpierw za pomocą funkcji fetch wysyłamy zapytanie (request) pod podany adres endpointu
+      //fetch domyślnie korzysta z metody GET
+      //Połącz się z adresem url przy użyciu metody fetch.
+      fetch(url)
+      //funkcja schowana w pierwszym .then to funkcja, która uruchomi się wtedy, gdy request się zakończy, a serwer zwróci odpowiedź
+      //otrzymujemy odpowiedź w formacie JSON
+      //konwertujemy więc tę odpowiedź na obiekt JS-owy
+        .then(function(rawResponse){
+          return rawResponse.json();
+        })
+        //po otrzymaniu skonwertowanej odpowiedzi parsedResponse, wyświetlamy ją w konsoli
+        .then(function(parsedResponse){
+          console.log('parsedResponse', parsedResponse);
+
+          /* save parsedResponse as thisApp.data.products */
+          thisApp.data.products = parsedResponse;
+
+          /* execute initMenu method */
+          thisApp.initMenu();
+        });
+
+        console.log('thisApp.data', JSON.stringify(thisApp.data));
+    
     },
 
     //tworzy instancje klasy Cart (tylko jedną)
@@ -500,11 +745,10 @@ const select = {
       const thisApp = this;
 
       thisApp.initData();
-      thisApp.initMenu();
       thisApp.initCart();
     },
 
-  };
+  }
 
   app.init();
 }
