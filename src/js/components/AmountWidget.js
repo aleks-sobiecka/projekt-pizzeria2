@@ -1,84 +1,66 @@
 import {select, settings} from '../settings.js';
+import BaseWidget from './BaseWidget.js';
  
  //wzór tego co ma się dziać z widgetem ilości
-  class AmountWidget {
+ //AmountWidget jest rozwinięciem klasy BaseWidget
+  class AmountWidget extends BaseWidget{
     constructor(element){
+      //wywołanie konstruktora klasy nadrzędnej
+      super(element, settings.amountWidget.defaultValue);
+      
       const thisWidget = this;
 
-      //thisProduct.dom.amountWidgetElem = thisWidget.element
+      //thisProduct.dom.amountWidgetElem = thisWidget.dom.wrapper
       //element - jest divem który przekazuje z konstruktora czyli thisProduct.dom.amountWidgetElem
       //czyli konkretny div (z opcjami zmiany ilości) z każdego produktu
       thisWidget.getElements(element);
       thisWidget.initActions(element);
-      thisWidget.setValue(thisWidget.input.value);
 
       //console.log('AmountWidget:', thisWidget);
       //console.log('constructor arguments:', element);
     }
 
-    getElements(element){
+    getElements(){
       const thisWidget = this;
 
-      thisWidget.element = element;
-
-      thisWidget.input = thisWidget.element.querySelector(select.widgets.amount.input);
-      thisWidget.linkDecrease = thisWidget.element.querySelector(select.widgets.amount.linkDecrease);
-      thisWidget.linkIncrease = thisWidget.element.querySelector(select.widgets.amount.linkIncrease);
-      thisWidget.value = settings.amountWidget.defaultValue;
+      thisWidget.dom.input = thisWidget.dom.wrapper.querySelector(select.widgets.amount.input);
+      thisWidget.dom.linkDecrease = thisWidget.dom.wrapper.querySelector(select.widgets.amount.linkDecrease);
+      thisWidget.dom.linkIncrease = thisWidget.dom.wrapper.querySelector(select.widgets.amount.linkIncrease);
     }
 
-    //metoda-funkcja która sprawdza czy wpisana wartość jest poprawna i zmienia wartość
-    setValue(value){
+    //zwraca prawdę lub fałsz sprawdzając czy wartość którą chcemy wprowadzić dla widgetu jest prawidłowa
+    isValid(value){
+      return !isNaN(value) 
+      && value >= settings.amountWidget.defaultMin
+      && value <= settings.amountWidget.defaultMax
+    }
+
+    //wyświetla na stronie bieżącą wartość widgetu
+    renderValue(){
       const thisWidget = this;
 
-      //przekonwertowanie value na liczbę
-      const newValue = parseInt(value);
-
-      /* Add validation */
-      if(thisWidget.value !== newValue && !isNaN(newValue)
-      && value >= settings.amountWidget.defaultMin
-      && value <= settings.amountWidget.defaultMax){
-        thisWidget.value = newValue;
-        thisWidget.announce();
-      }
-
-      thisWidget.input.value = thisWidget.value;
+      thisWidget.dom.input.value = thisWidget.value;
     }
 
     //metoda która mówi o tym kiedy ma być wykonane setValue (zmiana wartości)
     initActions(){
       const thisWidget = this;
 
-      thisWidget.input.addEventListener('change', function(){
-        thisWidget.setValue(thisWidget.input.value);
+      thisWidget.dom.input.addEventListener('change', function(){
+        //thisWidget.setValue(thisWidget.dom.input.value);
+        thisWidget.value = thisWidget.dom.input.value;
       });
 
-      thisWidget.linkDecrease.addEventListener('click', function(event){
+      thisWidget.dom.linkDecrease.addEventListener('click', function(event){
         event.preventDefault();
         thisWidget.setValue(thisWidget.value - 1);
       });
 
-      thisWidget.linkIncrease.addEventListener('click', function(event){
+      thisWidget.dom.linkIncrease.addEventListener('click', function(event){
         event.preventDefault();
         thisWidget.setValue(thisWidget.value + 1);
       });
     }
-
-    //metoda tworzy instancje klasy Event (wbudowanej w JS) 
-    //i emituje go na divie widgetu do zmiany ceny(na naszym elemencie DOM)
-    announce(){
-      const thisWidget = this;
-
-      //Dzięki bubbles customowy event bąbelkuje i jest przekazywany od klikniętego elementu do rodzica.
-      //a np, event 'click' bąbelkuje domyślnie
-      const event = new CustomEvent('updated', {
-        bubbles: true
-      });
-      thisWidget.element.dispatchEvent(event);
-
-      //thisProduct.dom.amountWidgetElem = thisWidget.element
-    }
-
   }
 
 export default AmountWidget;

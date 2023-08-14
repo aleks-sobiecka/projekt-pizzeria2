@@ -70,10 +70,13 @@ utils.hourToNumber = function(hour){
   return parseInt(parts[0]) + parseInt(parts[1])/60;
 };
 
+//przekształca obiekt daty na tekst w wygodniejszym formacie rok-miesiąc-dzień, czyli np. '2021-05-31'
 utils.dateToStr = function(dateObj){
   return dateObj.toISOString().slice(0, 10);
 };
 
+//może przesunąć datę
+//przyjmuje dwa argumenty: datę, do której ma dodać ilość dni, oraz ilość dni, która ma być dodana
 utils.addDays = function(dateStr, days){
   const dateObj = new Date(dateStr);
   dateObj.setDate(dateObj.getDate() + days);
