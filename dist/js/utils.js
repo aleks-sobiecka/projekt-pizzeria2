@@ -64,6 +64,7 @@ utils.numberToHour = function(number){
   return (Math.floor(number) % 24) + ':' + (number % 1 * 60 + '').padStart(2, '0');
 };
 
+//konwertowanie godziny do innego formatu
 utils.hourToNumber = function(hour){
   const parts = hour.split(':');
 
