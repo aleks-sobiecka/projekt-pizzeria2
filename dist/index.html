@@ -9,6 +9,8 @@
   <link href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="vendor/range-slider.min.css">
+  <link rel="stylesheet" href="vendor/flickity.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.0.0/css/all.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -74,10 +76,142 @@
     </section>
   </div>
 
-  <script id="template-home" tupe="text/x-handlebars-template">
-    <div> blablalbla </div>
+  <script id="template-home" type="text/x-handlebars-template">
+
+    <div class="home-page">
+      <div class="home-widget">
+        <div class="home-nav">
+          <div class="home-options">
+            <a href="#order">
+              <div class="options-gallery">
+                <img src="images/home/pizza-1.jpg">
+              </div>
+              <div class="options-title">
+                <h2>ORDER ONLINE</h2>
+                <h4>Delicious food delivered to your door</h4>
+              </div>
+            </a>
+          </div>
+          <div class="home-options">
+            <a href="#booking">
+              <div class="options-gallery">
+                <img src="images/home/pizza-2.jpg">
+              </div>
+              <div class="options-title">
+                <h2>BOOK A TABLE</h2>
+                <h4>Delicious food delivered to your door</h4>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div class="opening">
+          <div class="opening-title">
+            <h2>OPENING HOURS:</h2>
+            <h3>TUE - SUN, 12PM - 12AM</h3>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-carousel">
+        <div class="main-carousel">
+          <div class="carousel-cell">
+            <div class="carousel-photo">
+              <img src="images/home/pizza-3.jpg">
+            </div>
+            <div class="carousel-text">
+              <h4>Lorem Ipsum1</h4>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eget nulla tempus, vehicula purus eget, pretium magna. Donec commodo lorem augue, id efficitur lorem iaculis ac.</p>
+              <p>- John Doe</p>
+            </div>
+          </div>
+          <div class="carousel-cell">
+            <div class="carousel-photo">
+              <img src="images/home/pizza-3.jpg">
+            </div>
+            <div class="carousel-text">
+              <h4>Lorem Ipsum2</h4>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eget nulla tempus, vehicula purus eget, pretium magna. Donec commodo lorem augue, id efficitur lorem iaculis ac.</p>
+              <p>- John Doe</p>
+            </div>
+          </div>
+          <div class="carousel-cell">
+            <div class="carousel-photo">
+              <img src="images/home/pizza-3.jpg">
+            </div>
+            <div class="carousel-text">
+              <h4>Lorem Ipsum3</h4>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eget nulla tempus, vehicula purus eget, pretium magna. Donec commodo lorem augue, id efficitur lorem iaculis ac.</p>
+              <p>- John Doe</p>
+            </div>
+          </div>
+          <div class="carousel-cell">
+            <div class="carousel-photo">
+              <img src="images/home/pizza-3.jpg">
+            </div>
+            <div class="carousel-text">
+              <h4>Lorem Ipsum4</h4>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec eget nulla tempus, vehicula purus eget, pretium magna. Donec commodo lorem augue, id efficitur lorem iaculis ac.</p>
+              <p>- John Doe</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-gallery">
+        <div class="home-gallery-wrapper">
+          <div class="photo-container">
+            <img src="images/home/pizza-4.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+          <div class="photo-container">
+            <img src="images/home/pizza-5.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+          <div class="photo-container">
+            <img src="images/home/pizza-6.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+          <div class="photo-container">
+            <img src="images/home/pizza-7.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+          <div class="photo-container">
+            <img src="images/home/pizza-8.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+          <div class="photo-container">
+            <img src="images/home/pizza-9.jpg">
+            <div class="layer">
+              <a href="#"><i class="fa-solid fa-heart"></i></a>
+              <a href="#"><i class="fa-solid fa-share-nodes"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-footer">
+        <a href="#">View more on Instagram</a>
+      </div>
+
+    </div>
+
   </script>
-  
+
   <script id="template-cart-product" type="text/x-handlebars-template">
     <li>
       <div class="widget-amount"> <!-- widget-amount -->
@@ -253,6 +387,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.1.0/handlebars.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="vendor/range-slider.min.js"></script>
+    <script src="vendor/flickity.pkgd.min.js"></script>
     <script src="js/app.js" type="module"></script>
   </body>
   </html>
